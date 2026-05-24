@@ -1,0 +1,6 @@
+{
+  "name": "QuickBite",
+  "description": "Fresh food, fast delivery. A modern, high-fidelity QuickBite delivery application for assignment se 512.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
