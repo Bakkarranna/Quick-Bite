@@ -3,6 +3,7 @@ package com.example.ui.screens
 import android.content.Context
 import android.content.Intent
 import android.widget.Toast
+import com.example.ui.components.ToastHelper
 import androidx.compose.animation.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
@@ -42,8 +43,15 @@ fun CartScreen(
     val cartItems by viewModel.cartItems.collectAsState()
     val subtotal by viewModel.cartSubtotal.collectAsState()
 
-    var promoCode by remember { mutableStateOf("") }
+    val activePromo by viewModel.activePromoCode.collectAsState()
+    var promoCode by remember(activePromo) { mutableStateOf(activePromo) }
     var discountAmount by remember { mutableStateOf(0.0) }
+
+    LaunchedEffect(activePromo, subtotal) {
+        if (activePromo.trim().equals("CLAIM50", ignoreCase = true)) {
+            discountAmount = subtotal * 0.5
+        }
+    }
 
     val deliveryFee = if (cartItems.isEmpty()) 0.0 else 100.0 // Rs. 100
     val total = (subtotal + deliveryFee - discountAmount).coerceAtLeast(0.0)
@@ -95,7 +103,7 @@ fun CartScreen(
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                     modifier = Modifier.padding(vertical = 4.dp)
                 ) {
-                    Icon(Icons.Default.Storefront, contentDescription = null, tint = Color(0xFFFFA500))
+                    Icon(Icons.Default.Storefront, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                     Text("From: ", color = MaterialTheme.colorScheme.onSurfaceVariant, fontSize = 14.sp)
                     Text("Spice Grill & Biryani", fontWeight = FontWeight.Bold, fontSize = 15.sp)
                 }
@@ -155,12 +163,12 @@ fun CartScreen(
                         onClick = {
                             if (promoCode.trim().equals("CLAIM50", ignoreCase = true)) {
                                 discountAmount = subtotal * 0.5
-                                Toast.makeText(context, "Promo applied: 50% discount!", Toast.LENGTH_SHORT).show()
+                                ToastHelper.showToast("Promo applied: 50% discount!")
                             } else {
-                                Toast.makeText(context, "Invalid promo code.", Toast.LENGTH_SHORT).show()
+                                ToastHelper.showToast("Invalid promo code.")
                             }
                         },
-                        colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF684100)),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),
                         shape = RoundedCornerShape(8.dp),
                         modifier = Modifier.height(56.dp)
                     ) {
@@ -358,7 +366,7 @@ fun CheckoutScreen(
                         Text("123 Foodie Lane, Tech District, Cityville", fontSize = 12.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
 
-                    TextButton(onClick = { Toast.makeText(context, "Switch target address from profile list", Toast.LENGTH_SHORT).show() }) {
+                    TextButton(onClick = { ToastHelper.showToast("Switch target address from profile list") }) {
                         Text("Change", color = MaterialTheme.colorScheme.primary, fontWeight = FontWeight.Bold, fontSize = 13.sp)
                     }
                 }
@@ -617,7 +625,7 @@ fun OrderPlacedScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(RoundedCornerShape(12.dp))
-                .background(Color(0xFFFFA500).copy(alpha = 0.2f))
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.15f))
                 .padding(16.dp)
         ) {
             Row(
@@ -625,12 +633,12 @@ fun OrderPlacedScreen(
                 horizontalArrangement = Arrangement.Center,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Icon(Icons.Default.Schedule, contentDescription = null, tint = Color(0xFF684100))
+                Icon(Icons.Default.Schedule, contentDescription = null, tint = MaterialTheme.colorScheme.primary)
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
                     text = "Estimated Delivery Time: 30–40 min",
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF684100),
+                    color = MaterialTheme.colorScheme.primary,
                     fontSize = 13.sp
                 )
             }
@@ -693,18 +701,22 @@ fun TrackOrderScreen(
                 .padding(innerPadding)
                 .fillMaxSize()
         ) {
-            // Map Area (Background 52%)
+            // Map Area (Background 52%) - Powered by InteractiveVectorMap
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .fillMaxHeight(0.52f)
             ) {
-                // Mock Image Map loaded using Coil
-                Image(
-                    painter = rememberAsyncImagePainter("https://lh3.googleusercontent.com/aida-public/AB6AXuDNY465aJV1GYW-McL-9b9i0J1QWUp5WU1iOBIE3M4lA8dE2QtRF91ny4G5NjGZm8Omp3AK0Et5OMni4tyOruHoqBEbsDEP-2HK6732YCRnIa63M_14FTLTbd4L5f417QotEUp-K16jepPjMNd0Qhauq3fNIi5dACkI49cuGCkMB9e_mygNw_YmvE36ezeS3xbS1_zvlUz1VRTjWoaTmwdmsC97DvbslQcKKhbWxcX4vuvCnoH8dezeu35xnukUxkXy9_O_fackZ5w"),
-                    contentDescription = "Rider Path Live Map",
-                    contentScale = ContentScale.Crop,
-                    modifier = Modifier.fillMaxSize()
+                val restaurantName = orderState?.restaurantName ?: "Chef's Kitchen"
+                
+                com.example.ui.components.InteractiveVectorMap(
+                    modifier = Modifier.fillMaxSize(),
+                    riderProgress = progressPercent,
+                    showRiderProgress = true,
+                    markers = listOf(
+                        com.example.ui.components.MapMarker(restaurantName, androidx.compose.ui.geometry.Offset(-200f, -100f), com.example.ui.components.MarkerType.RESTAURANT, "Restaurant location"),
+                        com.example.ui.components.MapMarker("My House", androidx.compose.ui.geometry.Offset(280f, 400f), com.example.ui.components.MarkerType.DESTINATION, "Saved Delivery Address")
+                    )
                 )
 
                 // Back Button
@@ -717,58 +729,6 @@ fun TrackOrderScreen(
                         .background(Color.White)
                 ) {
                     Icon(Icons.Default.ArrowBack, contentDescription = "Back", tint = Color.Black)
-                }
-
-                // Restaurant start pin
-                Box(
-                    modifier = Modifier
-                        .offset(x = 60.dp, y = 140.dp)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .border(1.dp, Color.Gray, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Storefront, contentDescription = null, tint = Color.Gray, modifier = Modifier.size(16.dp))
-                }
-
-                // Rider Active pin (drawn with pulsating dynamic overlay as in Screen 8!)
-                Box(
-                    modifier = Modifier
-                        .offset(x = 160.dp, y = 110.dp)
-                ) {
-                    Box(
-                        modifier = Modifier
-                            .size(38.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.primary)
-                            .border(2.dp, Color.White, CircleShape),
-                        contentAlignment = Alignment.Center
-                    ) {
-                        Icon(Icons.Default.TwoWheeler, contentDescription = null, tint = Color.White, modifier = Modifier.size(20.dp))
-                    }
-                    Box(
-                        modifier = Modifier
-                            .offset(y = 42.dp, x = (-4).dp)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(Color.White)
-                            .padding(horizontal = 6.dp, vertical = 2.dp)
-                    ) {
-                        Text("12 min", fontSize = 9.sp, fontWeight = FontWeight.Black)
-                    }
-                }
-
-                // Home destination Pin
-                Box(
-                    modifier = Modifier
-                        .offset(x = 280.dp, y = 60.dp)
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(Color.White)
-                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Icon(Icons.Default.Home, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                 }
             }
 
@@ -925,7 +885,7 @@ fun TrackOrderScreen(
 
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                                 IconButton(
-                                    onClick = { Toast.makeText(context, "Chat screen currently simulated.", Toast.LENGTH_SHORT).show() },
+                                    onClick = { ToastHelper.showToast("Chat screen currently simulated.") },
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
@@ -934,7 +894,7 @@ fun TrackOrderScreen(
                                     Icon(Icons.Default.Chat, contentDescription = "Chat", tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(16.dp))
                                 }
                                 IconButton(
-                                    onClick = { Toast.makeText(context, "Dialing rider Usman (+92 301 2345678)...", Toast.LENGTH_SHORT).show() },
+                                    onClick = { ToastHelper.showToast("Dialing rider Usman (+92 301 2345678)...") },
                                     modifier = Modifier
                                         .size(36.dp)
                                         .clip(CircleShape)
@@ -1125,7 +1085,7 @@ fun RateOrderScreen(
                         comment = reviewComment,
                         tags = selectedTags.joinToString(",")
                     )
-                    Toast.makeText(context, "Review submitted successfully! Thank you Ahmed.", Toast.LENGTH_LONG).show()
+                    ToastHelper.showToast("Review submitted successfully! Thank you Ahmad.")
                     onFinish()
                 },
                 colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.primary),

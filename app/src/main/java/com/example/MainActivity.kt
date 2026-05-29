@@ -63,7 +63,8 @@ fun MainAppContainer(
     val bottomNavRoutes = listOf("dashboard", "orders", "profile")
     val shouldShowBottomBar = currentRoute in bottomNavRoutes
 
-    Scaffold(
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
         bottomBar = {
             if (shouldShowBottomBar) {
                 NavigationBar {
@@ -110,7 +111,9 @@ fun MainAppContainer(
         NavHost(
             navController = navController,
             startDestination = "dashboard",
-            modifier = Modifier.padding(innerPadding)
+            modifier = Modifier
+                .padding(innerPadding)
+                .fillMaxSize()
         ) {
             // Dashboard (Home)
             composable("dashboard") {
@@ -237,4 +240,6 @@ fun MainAppContainer(
             }
         }
     }
+    com.example.ui.components.CustomToastOverlay()
+}
 }

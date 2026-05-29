@@ -45,7 +45,7 @@ class DeliverySimulationService : Service() {
 
         // Move to Preparing
         repository.updateOrderStatus(orderId, "Preparing")
-        sendNotification("Food is Preparing", "Ahmed, your food is being freshly cooked!", 1002)
+        sendNotification("Food is Preparing", "Ahmad, your food is being freshly cooked!", 1002)
         delay(15000) // 15 seconds in Preparing
 
         // Move to On the way

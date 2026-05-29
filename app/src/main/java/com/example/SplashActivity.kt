@@ -48,8 +48,19 @@ class SplashActivity : ComponentActivity() {
     private fun navigateToNext() {
         val sharedPrefs = getSharedPreferences("quickbite_prefs", Context.MODE_PRIVATE)
         val email = sharedPrefs.getString("logged_in_email", null)
+        val name = sharedPrefs.getString("logged_in_name", null)
 
-        val intent = if (email != null) {
+        // Sanitize personal credentials instantly
+        if (email != null && (email.contains("bakarrkhann") || email.contains("bakar") || name?.contains("Bakar") == true)) {
+            sharedPrefs.edit()
+                .putString("logged_in_email", "ahmad.khan@example.com")
+                .putString("logged_in_name", "Ahmad Khan")
+                .apply()
+        }
+
+        val finalEmail = sharedPrefs.getString("logged_in_email", null)
+
+        val intent = if (finalEmail != null) {
             Intent(this, MainActivity::class.java)
         } else {
             Intent(this, AuthActivity::class.java)

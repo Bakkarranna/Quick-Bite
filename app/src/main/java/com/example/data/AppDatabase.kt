@@ -38,6 +38,7 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "quickbite_database"
                 )
+                .fallbackToDestructiveMigration()
                 .addCallback(DatabaseCallback(context.applicationContext))
                 .build()
                 INSTANCE = instance
@@ -50,62 +51,24 @@ abstract class AppDatabase : RoomDatabase() {
         ) : RoomDatabase.Callback() {
             override fun onCreate(db: SupportSQLiteDatabase) {
                 super.onCreate(db)
-                // Seed database on creation
-                CoroutineScope(Dispatchers.IO).launch {
-                    val database = getDatabase(context)
-                    
-                    // Seed standard addresses
-                    database.deliveryAddressDao().insertAddress(
-                        DeliveryAddress(label = "Home", detail = "123 Foodie Lane, Tech District, Cityville")
-                    )
-                    database.deliveryAddressDao().insertAddress(
-                        DeliveryAddress(label = "Office", detail = "456 Corporate Plaza, Block C, Faisalabad")
-                    )
+                // Seed database synchronously on creation within the active transaction
+                try {
+                    db.execSQL("INSERT INTO delivery_addresses (label, detail) VALUES ('Home', '123 Foodie Lane, Tech District, Cityville')")
+                    db.execSQL("INSERT INTO delivery_addresses (label, detail) VALUES ('Office', '456 Corporate Plaza, Block C, Faisalabad')")
 
-                    // Seed standard completed orders to look like screen visual history
-                    database.orderHistoryDao().insertOrder(
-                        OrderHistory(
-                            orderId = "QB-1040",
-                            restaurantName = "Luigi's Woodfire Pizza",
-                            status = "Delivered",
-                            totalAmount = 28.00,
-                            itemsDescription = "Large Margherita + Garlic Bread",
-                            timestamp = System.currentTimeMillis() - 86400000 * 2 // 2 days ago
-                        )
-                    )
-                    database.orderHistoryDao().insertOrder(
-                        OrderHistory(
-                            orderId = "QB-1038",
-                            restaurantName = "The Burger Factory",
-                            status = "Delivered",
-                            totalAmount = 18.99,
-                            itemsDescription = "Double Smash Burger Combo",
-                            timestamp = System.currentTimeMillis() - 86400000 * 4 // 4 days ago
-                        )
-                    )
-                    database.orderHistoryDao().insertOrder(
-                        OrderHistory(
-                            orderId = "QB-1035",
-                            restaurantName = "Sushi Master",
-                            status = "Cancelled",
-                            totalAmount = 24.00,
-                            itemsDescription = "Dragon Roll + Miso Soup",
-                            timestamp = System.currentTimeMillis() - 86400000 * 6 // 6 days ago
-                        )
-                    )
+                    val now = System.currentTimeMillis()
+                    val ts2DaysAgo = now - 86400000L * 2
+                    val ts4DaysAgo = now - 86400000L * 4
+                    val ts6DaysAgo = now - 86400000L * 6
+                    val ts1HrAgo = now - 3600000L
 
-                    // Seed standard reviews matching review screen tags
-                    database.reviewItemDao().insertReview(
-                        ReviewItem(
-                            id = "REV-01",
-                            restaurantId = "rest-burger-co",
-                            restaurantName = "Burger & Co.",
-                            rating = 4f,
-                            comment = "The cheeseburger was incredibly juicy and came super fast!",
-                            tags = "Fast Delivery,Tasty!",
-                            timestamp = System.currentTimeMillis() - 3600000 // 1 hr ago
-                        )
-                    )
+                    db.execSQL("INSERT INTO order_history (orderId, restaurantName, status, totalAmount, itemsDescription, timestamp) VALUES ('QB-1040', 'Luigi''s Woodfire Pizza', 'Delivered', 28.00, 'Large Margherita + Garlic Bread', $ts2DaysAgo)")
+                    db.execSQL("INSERT INTO order_history (orderId, restaurantName, status, totalAmount, itemsDescription, timestamp) VALUES ('QB-1038', 'The Burger Factory', 'Delivered', 18.99, 'Double Smash Burger Combo', $ts4DaysAgo)")
+                    db.execSQL("INSERT INTO order_history (orderId, restaurantName, status, totalAmount, itemsDescription, timestamp) VALUES ('QB-1035', 'Sushi Master', 'Cancelled', 24.00, 'Dragon Roll + Miso Soup', $ts6DaysAgo)")
+
+                    db.execSQL("INSERT INTO review_items (id, restaurantId, restaurantName, rating, comment, tags, timestamp) VALUES ('REV-01', 'rest-burger-co', 'Burger & Co.', 4.0, 'The cheeseburger was incredibly juicy and came super fast!', 'Fast Delivery,Tasty!', $ts1HrAgo)")
+                } catch (e: Exception) {
+                    e.printStackTrace()
                 }
             }
         }

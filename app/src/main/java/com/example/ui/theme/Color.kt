@@ -17,11 +17,11 @@ val SurfaceTintLight = Color(0xFFBB1615)
 val TertiaryTeal = Color(0xFF00666C)
 
 // Dark Scheme Colors
-val PrimaryRedDark = Color(0xFFFFB4AA)
+val PrimaryRedDark = Color(0xFFB81313)
 val BackgroundDark = Color(0xFF1F100E)
 val OnBackgroundDark = Color(0xFFFADCD7)
 val SurfaceLowestDark = Color(0xFF160A09)
 val SurfaceDark = Color(0xFF1A0D0C)
 val OnSurfaceDark = Color(0xFFECE0DF)
 val OnSurfaceVariantDark = Color(0xFFD8C2BF)
-val OutlineDark = Color(0xFFFFB4AA)
+val OutlineDark = Color(0xFF906F6B)

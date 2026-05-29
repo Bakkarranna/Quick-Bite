@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "256197967454",
+    "project_id": "quickbite0011",
+    "storage_bucket": "quickbite0011.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:256197967454:android:01809fc824d0975700becf",
+        "android_client_info": {
+          "package_name": "com.aistudio.quickbite.ufbgrt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBELCN9mTPceXjc5x1Cts8nvFYe7GjbEso"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

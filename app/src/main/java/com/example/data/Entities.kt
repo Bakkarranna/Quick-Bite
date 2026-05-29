@@ -49,3 +49,16 @@ data class OrderHistory(
     val itemsDescription: String,
     val timestamp: Long = System.currentTimeMillis()
 )
+
+data class RestaurantData(
+    val id: String,
+    val title: String,
+    val tags: String,
+    val rating: String,
+    val price: String,
+    val distance: String,
+    val time: String,
+    val imageUrl: String,
+    val categories: List<String>
+)
+
